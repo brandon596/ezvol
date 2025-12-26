@@ -1,0 +1,159 @@
+#!/bin/bash
+set -e
+
+# Function to display help menu
+show_help() {
+    echo "Usage: ezvol [COMMAND] [OPTIONS]"
+    echo "Docker named volume manager."
+    echo ""
+    echo "Commands:"
+    echo "  export  Export docker volumes to tarballs"
+    echo "  import  Import tarballs to docker volumes"
+    echo "  help    Show this help menu"
+    echo ""
+    echo "Export Options:"
+    echo "  ezvol export [VOLUME_NAME...]"
+    echo "  ezvol export -a          Export ALL named volumes"
+    echo ""
+    echo "Import Options:"
+    echo "  ezvol import [FILE_NAME...]"
+    echo "  ezvol import -a          Import ALL tarballs in the current directory"
+    echo ""
+}
+
+# Check if docker is installed
+if ! command -v docker &> /dev/null; then
+    echo "Error: docker could not be found."
+    exit 1
+fi
+
+# Function to export volumes
+do_export() {
+    local volumes=()
+    if [[ "$1" == "-a" ]]; then
+        # Export all named volumes.
+        # Note: We are explicitly NOT filtering anonymous volumes as per user request.
+        # We process line by line to handle potential spaces in volume names safely (though rare)
+        while IFS= read -r vol; do
+            volumes+=("$vol")
+        done < <(docker volume ls --format '{{.Name}}')
+        
+        if [ ${#volumes[@]} -eq 0 ]; then
+            echo "No volumes found to export."
+            exit 0
+        fi
+    else
+        volumes=("$@")
+    fi
+
+    echo "Exporting ${#volumes[@]} volume(s)..."
+
+    for vol in "${volumes[@]}"; do
+        # Verify volume exists if explicitly named (skip verify for -a as we got them from ls)
+        if [[ "$1" != "-a" ]]; then
+             if ! docker volume inspect "$vol" &> /dev/null; then
+                echo "Warning: Volume '$vol' does not exist. Skipping."
+                continue
+            fi
+        fi
+
+        echo "Exporting '$vol'..."
+        if docker run --rm \
+            -v "${vol}:/data" \
+            -v "$(pwd):/backup" \
+            busybox tar czf "/backup/${vol}_ezvol.tar.gz" -C /data .; then
+            echo "Successfully exported: ${vol}_ezvol.tar.gz"
+        else
+            echo "Error exporting volume '$vol'"
+        fi
+    done
+}
+
+# Function to import volumes
+do_import() {
+    local files=()
+    if [[ "$1" == "-a" ]]; then
+        # Import all tarballs in current directory
+        # Using nullglob to handle case where no tar.gz files exist
+        shopt -s nullglob
+        files=(*.tar.gz)
+        shopt -u nullglob
+        
+        if [ ${#files[@]} -eq 0 ]; then
+            echo "No .tar.gz files found to import."
+            exit 0
+        fi
+    else
+        files=("$@")
+    fi
+
+    echo "Importing ${#files[@]} file(s)..."
+
+    for file in "${files[@]}"; do
+        if [[ ! -f "$file" ]]; then
+            echo "Warning: File '$file' not found. Skipping."
+            continue
+        fi
+
+        # Determine volume name
+        local filename=$(basename "$file")
+        local vol_name=""
+        
+        if [[ "$filename" == *_ezvol.tar.gz ]]; then
+            vol_name="${filename%_ezvol.tar.gz}"
+        elif [[ "$filename" == *.tar.gz ]]; then
+            vol_name="${filename%.tar.gz}"
+        else
+            # Fallback if somehow a non-tar.gz got here (unlikely with current logic but good safety)
+            vol_name="$filename"
+        fi
+
+        echo "Importing '$file' into volume '$vol_name'..."
+        
+        # Create volume silently (ignore if exists)
+        docker volume create "$vol_name" > /dev/null 2>&1
+
+        if docker run --rm \
+            -v "${vol_name}:/data" \
+            -v "$(pwd):/backup" \
+            busybox tar xzf "/backup/${filename}" -C /data; then
+            echo "Successfully imported: $vol_name"
+        else
+             echo "Error importing file '$file'"
+        fi
+    done
+}
+
+# Main routing logic
+case "$1" in
+    export)
+        shift
+        if [ $# -eq 0 ]; then
+             echo "Error: No volume specified."
+             echo "Usage: ezvol export [VOLUME_NAME...] or ezvol export -a"
+             exit 1
+        fi
+        do_export "$@"
+        ;;
+    import)
+        shift
+        if [ $# -eq 0 ]; then
+             echo "Error: No file specified."
+             echo "Usage: ezvol import [FILE_NAME...] or ezvol import -a"
+             exit 1
+        fi
+        do_import "$@"
+        ;;
+    help|--help|-h)
+        show_help
+        ;;
+    "")
+        show_help
+        exit 1
+        ;;
+    *)
+        echo "Unknown command: $1"
+        show_help
+        exit 1
+        ;;
+esac
