@@ -1,51 +1,100 @@
-# ezvol
-**ezvol** is a lightweight Bash CLI tool designed to simplify the management of Docker named volumes. It automates the process of exporting volumes to tarballs and importing them back, using ephemeral `busybox` containers to ensure a clean and consistent state.
-## Features
-- **Export Volumes**: Easily backup specific Docker named volumes or all of them at once.
-- **Import Volumes**: Restore volumes from tarballs with automatic volume creation.
-- **Clean Execution**: Uses temporary `busybox` containers that are removed immediately after the operation, leaving no clutter.
-- **Smart Naming**: Automatically handles file naming conventions (appending `_ezvol.tar.gz` on export and stripping it on import).
-## Prerequisites
-- **Docker**: The tool requires the Docker CLI to be installed and running.
-## Installation
-1.  Download the `ezvol` script.
-2.  Make the script executable:
-    ```bash
-    chmod +x ezvol
-    ```
-3.  (Optional) Move it to a directory in your `$PATH` for global usage:
-    ```bash
-    sudo mv ezvol /usr/local/bin/ezvol
-    ```
-## Usage
-### Exporting Volumes
-To export one or more specific volumes:
+# ezvol  
+**ezvol** – a lightweight Bash CLI that makes Docker named‑volume backup & restore a single command away.
+
+## ✨ Features
+
+| Feature | What it does |
+|---------|--------------|
+| **Export** | Backup one or more Docker volumes (or all of them) to `*.tar.gz` files. |
+| **Import** | Restore a volume from an existing tarball; the volume is created automatically if it doesn’t exist. |
+| **Smart naming** | Exported files are suffixed with `_ezvol.tar.gz`. During import the suffix is stripped automatically. |
+
+
+
+## 📦 Prerequisites
+
+- Docker CLI installed and running (`docker` command must be available).
+
+
+
+## 🔧 Installation
+
+### 1️⃣ macOS – one‑time setup (Linux users can skip)
+
 ```bash
-ezvol export my_volume another_volume
+# Create a local bin folder if it doesn't exist
+mkdir -p ~/.local/bin
+
+# Add it to your PATH (add this line once to ~/.zshrc or ~/.bash_profile)
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
+
+# Apply the change immediately
+source ~/.zshrc
 ```
-This will create `my_volume_ezvol.tar.gz` and `another_volume_ezvol.tar.gz` in the current directory.
-To export **ALL** named volumes:
+
+### 2️⃣ Install `ezvol`
+
 ```bash
+curl -sSL https://raw.githubusercontent.com/brandon596/ezvol/main/ezvol \
+  -o ~/.local/bin/ezvol && chmod +x ~/.local/bin/ezvol
+```
+Alternative shortened URL:
+
+```bash
+curl -sSL https://tini.fyi/13gBe \
+  -o ~/.local/bin/ezvol && chmod +x ~/.local/bin/ezvol
+```
+
+
+Now you can run `ezvol` from any directory.
+
+
+
+## 🗑️ Uninstallation
+
+```bash
+rm ~/.local/bin/ezvol
+```
+
+(If you installed it elsewhere, adjust the path accordingly.)
+
+
+## 📖 Usage
+
+### Export a volume (or multiple)
+
+```bash
+# Single volume
+ezvol export my_volume
+
+# Multiple volumes
+ezvol export vol1 vol2
+
+# All named volumes
 ezvol export -a
 ```
-### Importing Volumes
-To import one or more specific tarballs:
+
+Exported files will be named `volume_ezvol.tar.gz` and placed in the current working directory.
+
+### Import a volume
+
 ```bash
+# Single tarball
 ezvol import my_volume_ezvol.tar.gz
-```
-This will create a docker volume named `my_volume` (if it doesn't exist) and restore the data.
-To import **ALL** tarballs (`*.tar.gz`) in the current directory:
-```bash
+
+# All tarballs in the current directory
 ezvol import -a
 ```
+
+The tool will create a Docker volume with the original name (if it doesn’t exist) and extract the data into it.
+
 ### Help
-Display the help menu:
+
 ```bash
 ezvol help
 ```
-## How It Works
-- **Export**: Mounts the requested volume and the current directory into a temporary `busybox` container, then runs `tar czf` to create a compressed archive of the volume's contents.
-- **Import**: Creates the destination volume (if missing), mounts it and the current directory into a temporary `busybox` container, and runs `tar xzf` to extract the archive into the volume.
 
-## Disclaimer
-This repository is completely AI-generated using Anitgravity lol
+
+## ⚠️ Disclaimer
+
+This repository is generated entirely by AI. lol  
