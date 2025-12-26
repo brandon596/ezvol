@@ -7,7 +7,6 @@
 |---------|--------------|
 | **Export** | Backup one or more Docker volumes (or all of them) to `*.tar.gz` files. |
 | **Import** | Restore a volume from an existing tarball; the volume is created automatically if it doesn’t exist. |
-| **Smart naming** | Exported files are suffixed with `_ezvol.tar.gz`. During import the suffix is stripped automatically. |
 
 
 
@@ -74,13 +73,13 @@ ezvol export vol1 vol2
 ezvol export -a
 ```
 
-Exported files will be named `volume_ezvol.tar.gz` and placed in the current working directory.
+Exported files will be named `volume.tar.gz` and placed in the current working directory.
 
 ### Import a volume
 
 ```bash
 # Single tarball
-ezvol import my_volume_ezvol.tar.gz
+ezvol import my_volume.tar.gz
 
 # All tarballs in the current directory
 ezvol import -a
