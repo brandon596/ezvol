@@ -61,8 +61,8 @@ do_export() {
         if docker run --rm \
             -v "${vol}:/data" \
             -v "$(pwd):/backup" \
-            busybox tar czf "/backup/${vol}_ezvol.tar.gz" -C /data .; then
-            echo "Successfully exported: ${vol}_ezvol.tar.gz"
+            busybox tar czf "/backup/${vol}.tar.gz" -C /data .; then
+            echo "Successfully exported: ${vol}.tar.gz"
         else
             echo "Error exporting volume '$vol'"
         fi
@@ -99,9 +99,7 @@ do_import() {
         local filename=$(basename "$file")
         local vol_name=""
         
-        if [[ "$filename" == *_ezvol.tar.gz ]]; then
-            vol_name="${filename%_ezvol.tar.gz}"
-        elif [[ "$filename" == *.tar.gz ]]; then
+        if [[ "$filename" == *.tar.gz ]]; then
             vol_name="${filename%.tar.gz}"
         else
             # Fallback if somehow a non-tar.gz got here (unlikely with current logic but good safety)
