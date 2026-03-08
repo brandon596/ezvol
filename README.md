@@ -18,16 +18,19 @@
 
 ## 🔧 Installation
 
-### 1️⃣ macOS – one‑time setup (Linux users can skip)
+### 1️⃣ Add ~/.local/bin to PATH – one‑time setup
 
 ```bash
 # Create a local bin folder if it doesn't exist
 mkdir -p ~/.local/bin
 
 # Add it to your PATH (add this line once to ~/.zshrc or ~/.bash_profile)
+# For macOS or zsh
 echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
+# For bash linux
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
 
-# Apply the change immediately
+# Apply the change immediately or restart the terminal
 source ~/.zshrc
 ```
 
@@ -35,12 +38,6 @@ source ~/.zshrc
 
 ```bash
 curl -sSL https://raw.githubusercontent.com/brandon596/ezvol/main/ezvol \
-  -o ~/.local/bin/ezvol && chmod +x ~/.local/bin/ezvol
-```
-Alternative shortened URL:
-
-```bash
-curl -sSL https://tini.fyi/13gBe \
   -o ~/.local/bin/ezvol && chmod +x ~/.local/bin/ezvol
 ```
 
