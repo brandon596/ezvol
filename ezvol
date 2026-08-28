@@ -61,8 +61,8 @@ do_export() {
         if docker run --rm \
             -v "${vol}:/data" \
             -v "$(pwd):/backup" \
-            busybox tar czf "/backup/${vol}.tar.gz" -C /data .; then
-            echo "Successfully exported: ${vol}.tar.gz"
+            busybox tar cf "/backup/${vol}.tar" -C /data .; then
+            echo "Successfully exported: ${vol}.tar"
         else
             echo "Error exporting volume '$vol'"
         fi
@@ -74,13 +74,13 @@ do_import() {
     local files=()
     if [[ "$1" == "-a" ]]; then
         # Import all tarballs in current directory
-        # Using nullglob to handle case where no tar.gz files exist
+        # Using nullglob to handle case where no .tar files exist
         shopt -s nullglob
-        files=(*.tar.gz)
+        files=(*.tar)
         shopt -u nullglob
         
         if [ ${#files[@]} -eq 0 ]; then
-            echo "No .tar.gz files found to import."
+            echo "No .tar files found to import."
             exit 0
         fi
     else
@@ -99,10 +99,10 @@ do_import() {
         local filename=$(basename "$file")
         local vol_name=""
         
-        if [[ "$filename" == *.tar.gz ]]; then
-            vol_name="${filename%.tar.gz}"
+        if [[ "$filename" == *.tar ]]; then
+            vol_name="${filename%.tar}"
         else
-            # Fallback if somehow a non-tar.gz got here (unlikely with current logic but good safety)
+            # Fallback if somehow a non-.tar file got here (unlikely with current logic but good safety)
             vol_name="$filename"
         fi
 
@@ -114,7 +114,7 @@ do_import() {
         if docker run --rm \
             -v "${vol_name}:/data" \
             -v "$(pwd):/backup" \
-            busybox tar xzf "/backup/${filename}" -C /data; then
+            busybox tar xf "/backup/${filename}" -C /data; then
             echo "Successfully imported: $vol_name"
         else
              echo "Error importing file '$file'"
